@@ -38,7 +38,7 @@ def join_game(cookie: str, id: int, job_id: str):
 
 def get_places() -> dict[str, int]:
     games = {}
-    with open("games") as file:
+    with open(os.path.dirname(__file__) + "/games") as file:
         lines = file.read().splitlines()
         for i in range(0, len(lines)):
             args = lines[i].split(':', 1)
@@ -47,7 +47,7 @@ def get_places() -> dict[str, int]:
 
 def get_accounts() -> dict[str, str]:
     accounts = {}
-    with open("accounts") as file:
+    with open(os.path.dirname(__file__) + "/accounts") as file:
         lines = file.read().splitlines()
         for i in range(0, len(lines)):
             args = lines[i].split(':', 1)
