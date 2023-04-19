@@ -33,13 +33,11 @@ def join_game(cookie: str, id: int, job_id: str, private_server_code: str | None
 
     browser_id = random.randint(100000000, 9999999999999)
 
-    job_code = f"%26JobId%3D{job_id}"
-    link_code = ''
+    link_code = f"%26GameId%3D{job_id}"
     if private_server_code:
-        job_code = ''
         link_code = f"%26linkcode%3D{private_server_code}"
 
-    launch = f"roblox-player:1+launchmode:play+gameinfo:{auth_ticket}+launchtime:{int(time.time() * 1000)}+placelauncherurl:https%3A%2F%2Fassetgame.roblox.com%2Fgame%2FPlaceLauncher.ashx%3Frequest%3DRequestGame%26BrowserTrackerId%3D{browser_id}%26PlaceId%3D{id}{job_code}{link_code}%26IsPlayTogetherGame%3Dfalse+BrowserTrackerId:{browser_id}+RobloxLocale:en_us+GameLocale:en_us"
+    launch = f"roblox-player:1+launchmode:play+gameinfo:{auth_ticket}+launchtime:{int(time.time() * 1000)}+placelauncherurl:https%3A%2F%2Fassetgame.roblox.com%2Fgame%2FPlaceLauncher.ashx%3Frequest%3DRequestGame%26BrowserTrackerId%3D{browser_id}%26PlaceId%3D{id}{link_code}%26IsPlayTogetherGame%3Dfalse+BrowserTrackerId:{browser_id}+RobloxLocale:en_us+GameLocale:en_us"
 
     os.system(launcher + ' ' + launch)
 
