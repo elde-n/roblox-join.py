@@ -21,7 +21,7 @@ def get_roblox_launcher() -> str:
             return path
     
     if shutil.which("vinegar"):
-        return "vinegar player"
+        return "vinegar player run"
     elif shutil.which("grapejuice"):
         return "grapejuice player"
 
