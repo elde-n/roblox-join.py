@@ -7,7 +7,7 @@ python main.py -u user-name -p place-name
 ```
 
 ## Adding Users
-Edit the 'accounts' file and add a newline containing "user:cookie"
+Edit the '~/.config/accounts' file and add a newline containing "user:cookie"
 
 ## Adding Games
-Edit the 'games' file and add a newline containing "place-id:alias"
+Edit the '~/.config/games' file and add a newline containing "place-id:alias"
