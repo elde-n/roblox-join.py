@@ -5,6 +5,7 @@ import os
 import time
 import shutil
 import random
+import pathlib
 import requests
 import argparse
 import argcomplete
@@ -19,7 +20,7 @@ def get_roblox_launcher() -> str:
         path = app_data + "\\Roblox\\Versions\\" + version + "\\RobloxPlayerLauncher.exe"
         if os.path.exists(path):
             return path
-    
+
     if shutil.which("vinegar"):
         return "vinegar player run"
     elif shutil.which("grapejuice"):
@@ -51,7 +52,9 @@ def get_launch_url(cookie: str, id: int, job_id: str, private_server_code: str |
 
 def get_places() -> dict[str, int]:
     games = {}
-    with open(os.path.dirname(__file__) + "/games") as file:
+
+    path = pathlib.Path().home().joinpath(".config/roblox-join/games")
+    with open(path) as file:
         lines = file.read().splitlines()
         for i in range(0, len(lines)):
             args = lines[i].split(':', 1)
@@ -60,7 +63,9 @@ def get_places() -> dict[str, int]:
 
 def get_accounts() -> dict[str, str]:
     accounts = {}
-    with open(os.path.dirname(__file__) + "/accounts") as file:
+
+    path = pathlib.Path().home().joinpath(".config/roblox-join/accounts")
+    with open(path) as file:
         lines = file.read().splitlines()
         for i in range(0, len(lines)):
             args = lines[i].split(':', 1)
@@ -82,13 +87,14 @@ def add_parser() -> argparse.Namespace:
     places = get_places()
     accounts = get_accounts()
 
-    parser.add_argument("--user","-u", choices = accounts, required = True)
+    parser.add_argument("--user","-u", choices = accounts)
     parser.add_argument("--place", "-p", choices = places)
     parser.add_argument("--place-id", "-pid")
     parser.add_argument("--job-id", "-jid")
     parser.add_argument("--link-code", "-lnk")
     parser.add_argument("--channel", "-C")
     parser.add_argument("--launcher", "-L")
+    parser.add_argument("--cookie")
 
     argcomplete.autocomplete(parser)
 
@@ -97,10 +103,14 @@ def add_parser() -> argparse.Namespace:
         parser.print_usage()
         exit(0)
 
+    if not arguments.user and not arguments.cookie:
+        parser.print_usage()
+        exit(0)
+
     return arguments
 
 def main(arguments: argparse.Namespace):
-    cookie = get_account(arguments.user)
+    cookie = arguments.user and get_account(arguments.user) or arguments.cookie
     place_id = arguments.place and get_place_id(arguments.place) or arguments.place_id
     job_id = arguments.job_id or ''
 
