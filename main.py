@@ -12,7 +12,7 @@ import argcomplete
 
 
 def get_roblox_launcher() -> str:
-    version = requests.get("http://setup.roblox.com/version.txt").content.decode("ascii")
+    version = requests.get("https://setup.rbxcdn.com/version.txt").content.decode("ascii")
     assert(version)
 
     app_data = os.getenv("LOCALAPPDATA")
@@ -23,8 +23,9 @@ def get_roblox_launcher() -> str:
 
     if shutil.which("vinegar"):
         return "vinegar player run"
-    elif shutil.which("grapejuice"):
-        return "grapejuice player"
+    elif shutil.which("flatpak"):
+        if os.system("flatpak list | grep \"org.vinegarhq.Vinegar\" && exit 0") == 0:
+            return "flatpak run org.vinegarhq.Vinegar player run"
 
     assert False, "couldn't find a valid roblox launcher"
 
