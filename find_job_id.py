@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 import requests
 import concurrent.futures
@@ -80,15 +82,11 @@ def find_job_id_from_token(servers: list[Server], token: str) -> str | None:
         if token in server["player-tokens"]:
             return server["job-id"]
 
-def main(argc: int, argv: list[str]):
-    assert(argc > 2)
-    user_id = int(argv[1])
-    place_id = int(argv[2])
-
+def find_job_id_from_user_id(user_id: int, place_id: int) -> str | None:
     size = "150x150"
     is_circular = False
 
-    max_threads = 20
+    max_threads = 100
     max_thumbnail_requests = 100
 
     servers = get_place_servers(place_id)
@@ -104,11 +102,18 @@ def main(argc: int, argv: list[str]):
             if u_thumbnail in result:
                 index += result.index(u_thumbnail)
                 job_id = find_job_id_from_token(servers, tokens[index])
-                if job_id:
-                    print(job_id)
-                    exit()
+                if job_id: return job_id
             else:
                 index += len(result)
+
+def main(argc: int, argv: list[str]):
+    assert(argc > 2)
+    user_id = int(argv[1])
+    place_id = int(argv[2])
+
+    job_id = find_job_id_from_user_id(user_id, place_id)
+    if job_id: print(job-id)
+    else: print("No job-id was found")
 
 if __name__ == "__main__":
     argv = sys.argv
