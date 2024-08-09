@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-# PYTHON_ARGCOMPLETE_OK
+#PYTHON_ARGCOMPLETE_OK
 
 import os
 import time
 import shutil
 import random
+import urllib
 import pathlib
 import requests
 import argparse
@@ -44,12 +45,25 @@ def get_launch_url(cookie: str, id: int, job_id: str, private_server_code: str |
     if private_server_code:
         link_code = f"%26linkcode%3D{private_server_code}"
 
-    channel = ''
-    if channel_name:
-        channel = "+" + channel_name
+    if channel_name == None: channel_name = ''
+    channel = "channel:" + channel_name
 
-    mode = "launchmode:play"
-    return f"roblox-player:1+{mode}{channel}+gameinfo:{auth_ticket}+launchtime:{int(time.time() * 1000)}+placelauncherurl:https%3A%2F%2Fassetgame.roblox.com%2Fgame%2FPlaceLauncher.ashx%3Frequest%3DRequestGame%26BrowserTrackerId%3D{browser_id}%26PlaceId%3D{id}{link_code}%26IsPlayTogetherGame%3Dfalse+BrowserTrackerId:{browser_id}+RobloxLocale:en_us+GameLocale:en_us"
+    #TODO: make it less ugly
+
+    version = 1
+    launch_mode = "launchmode:play"
+    launch_time = f"launchtime:{time.time() * 1000}"
+    game_info = f"gameinfo:{auth_ticket}"
+    base_url = "baseUrl:https://www.roblox.com/"
+
+    game_locale = "gameLocale:en_us"
+    roblox_locale = "robloxLocale:en_us"
+    launch_experience = "launchexp:InApp"
+
+    join_attempt_id = ""
+    place_launcher_url = "placelauncherurl:" + urllib.parse.quote(f"https://www.roblox.com/Game/PlaceLauncher.ashx?request=RequestGame&browserTrackerId={browser_id}&placeId={id}&isPlayTogetherGame=false&joinAttemptId={join_attempt_id}&joinAttemptOrigin=PlayButton")
+
+    return f"roblox-player:{version}+{launch_mode}+{game_info}+{launch_time}+{place_launcher_url}+{base_url}+{channel}+{roblox_locale}+{game_locale}+{launch_experience}"
 
 def parse_config_file(file_path: str) -> dict[str, str]:
     result = {}
@@ -122,6 +136,7 @@ def main(arguments: argparse.Namespace):
     launcher = arguments.launcher or get_roblox_launcher()
     launch_url = get_launch_url(cookie, place_id, job_id, arguments.link_code, arguments.channel)
 
+    print(launch_url)
     launch(launcher, launch_url)
 
 
