@@ -136,7 +136,6 @@ def main(arguments: argparse.Namespace):
     launcher = arguments.launcher or get_roblox_launcher()
     launch_url = get_launch_url(cookie, place_id, job_id, arguments.link_code, arguments.channel)
 
-    print(launch_url)
     launch(launcher, launch_url)
 
 
