@@ -41,10 +41,6 @@ def get_launch_url(cookie: str, id: int, job_id: str, private_server_code: str |
     auth_ticket = session.post("https://auth.roblox.com/v1/authentication-ticket/").headers["rbx-authentication-ticket"]
     browser_id = random.randint(100000000, 9999999999999)
 
-    link_code = f"%26GameId%3D{job_id}"
-    if private_server_code:
-        link_code = f"%26linkcode%3D{private_server_code}"
-
     if channel_name == None: channel_name = ''
     channel = "channel:" + channel_name
 
@@ -61,7 +57,20 @@ def get_launch_url(cookie: str, id: int, job_id: str, private_server_code: str |
     launch_experience = "launchexp:InApp"
 
     join_attempt_id = ""
-    place_launcher_url = "placelauncherurl:" + urllib.parse.quote(f"https://www.roblox.com/Game/PlaceLauncher.ashx?request=RequestGame&browserTrackerId={browser_id}&placeId={id}&isPlayTogetherGame=false&joinAttemptId={join_attempt_id}&joinAttemptOrigin=PlayButton")
+    place_launcher_parameters = (
+        f"https://www.roblox.com/Game/PlaceLauncher.ashx?request=RequestGame"
+        f"&browserTrackerId={browser_id}"
+        f"&placeId={id}"
+        f"&isPlayTogetherGame=false"
+        f"&joinAttemptId={join_attempt_id}"
+        f"&joinAttemptOrigin=PlayButton"
+        f"&gameId={job_id}"
+    )
+
+    if private_server_code:
+        place_launcher_parameters += f"&linkCode={private_server_code}"
+
+    place_launcher_url = "placelauncherurl:" + urllib.parse.quote(place_launcher_parameters)
 
     return f"roblox-player:{version}+{launch_mode}+{game_info}+{launch_time}+{place_launcher_url}+{base_url}+{channel}+{roblox_locale}+{game_locale}+{launch_experience}"
 
