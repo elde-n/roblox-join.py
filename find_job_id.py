@@ -112,7 +112,7 @@ def main(argc: int, argv: list[str]):
     place_id = int(argv[2])
 
     job_id = find_job_id_from_user_id(user_id, place_id)
-    if job_id: print(job-id)
+    if job_id: print(job_id)
     else: print("No job-id was found")
 
 if __name__ == "__main__":
