@@ -11,11 +11,16 @@ import requests
 import argparse
 import argcomplete
 
+import platform
+
 import find_job_id
 
 
 GAMES_CONFIG_FILE = ".config/roblox-join/games"
 ACCOUNTS_CONFIG_FILE = ".config/roblox-join/accounts"
+
+SOBER_FLATPAK = "org.vinegarhq.Sober"
+SOBER_COOKIES_PATH = f".var/app/{SOBER_FLATPAK}/data/sober/cookies"
 
 
 def get_roblox_launcher() -> str:
@@ -130,6 +135,12 @@ def add_parser() -> argparse.Namespace:
 
     return arguments
 
+def sober_update_cookie(cookie: str):
+    path = pathlib.Path().home().joinpath(SOBER_COOKIES_PATH)
+    with open(path, 'w') as f:
+        f.write(".ROBLOSECURITY=" + cookie)
+
+
 def main(arguments: argparse.Namespace):
     cookie = arguments.user and get_account(arguments.user) or arguments.cookie
     place_id = arguments.place and get_place_id(arguments.place) or arguments.place_id
@@ -144,6 +155,10 @@ def main(arguments: argparse.Namespace):
 
     launcher = arguments.launcher or get_roblox_launcher()
     launch_url = get_launch_url(cookie, place_id, job_id, arguments.link_code, arguments.channel)
+
+    if platform.system() != "Windows":
+        if os.popen("xdg-mime query default \"x-scheme-handler/roblox\"").read().startswith(SOBER_FLATPAK):
+            sober_update_cookie(cookie)
 
     launch(launcher, launch_url)
 
