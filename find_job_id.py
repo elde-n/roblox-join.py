@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+import time
 import requests
 import concurrent.futures
 
@@ -12,25 +13,37 @@ Server = dict[{
 }]
 
 
-def get_place_servers(place_id: int) -> list[Server]:
+def get_servers_from_place(place_id: int, cursor: str) -> (list[Server], str):
     servers = []
 
-    cursor = ''
-    while cursor != None:
-        url = f"https://games.roblox.com/v1/games/{place_id}/servers/0?sortOrder=2&excludeFullGames=false&limit=100&cursor={cursor}"
-        response = requests.get(url, headers = {
-            "accept": "application/json"
+    url = f"https://games.roblox.com/v1/games/{place_id}/servers/0?sortOrder=2&excludeFullGames=false&limit=100&cursor={cursor}"
+    response = requests.get(url, headers = {
+        "accept": "application/json"
+    })
+
+    if response.status_code != 200:
+        print(response.text)
+        time.sleep(1)
+        return get_servers_from_place(place_id, cursor)
+
+    data = response.json()
+    cursor = data["nextPageCursor"]
+
+    for i in data["data"]:
+        servers.append({
+            "job-id": i["id"],
+            "player-tokens": i["playerTokens"],
+            "players": i["players"]
         })
 
-        data = response.json()
-        cursor = data["nextPageCursor"]
+    return servers, cursor
 
-        for i in data["data"]:
-            servers.append({
-                "job-id": i["id"],
-                "player-tokens": i["playerTokens"],
-                "players": i["players"]
-            })
+def get_servers_from_place_all(place_id: int) -> list[Server]:
+    servers = []
+    cursor = ''
+    while cursor != None:
+        new_servers, cursor = get_servers_from_place(place_id, cursor)
+        servers.extend(new_servers)
 
     return servers
 
@@ -89,7 +102,7 @@ def find_job_id_from_user_id(user_id: int, place_id: int) -> str | None:
     max_threads = 100
     max_thumbnail_requests = 100
 
-    servers = get_place_servers(place_id)
+    servers = get_servers_from_place_all(place_id)
     tokens = get_tokens_from_servers(servers)
     u_thumbnail = get_thumbnail_from_user_id(user_id, size, is_circular)
 
