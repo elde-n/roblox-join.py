@@ -153,7 +153,7 @@ def main(arguments: argparse.Namespace):
             exit(1)
 
     launcher = arguments.launcher or get_roblox_launcher()
-    launch_url = get_launch_url(cookie, place_id, job_id, arguments.link_code, arguments.channel)
+    launch_url = get_launch_url(cookie, place_id, job_id, arguments.link_code, arguments.channel or '')
 
     if platform.system() != "Windows":
         if os.popen("xdg-mime query default \"x-scheme-handler/roblox\"").read().startswith(SOBER_FLATPAK):
