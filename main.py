@@ -3,13 +3,13 @@
 
 import os
 import time
-import shutil
 import random
 import urllib
 import pathlib
 import requests
 import argparse
 import argcomplete
+import urllib.parse
 
 import platform
 
@@ -35,7 +35,7 @@ def get_roblox_launcher() -> str:
 
     return "xdg-open"
 
-def get_launch_url(cookie: str, id: int, job_id: str, private_server_code: str | None, channel_name = '') -> str:
+def get_launch_url(cookie: str, id: int, job_id: str, private_server_code: str | None, channel_name: str = '') -> str:
     session = requests.session()
     session.headers["Referer"] = "https://www.roblox.com/"
     session.cookies.set(".ROBLOSECURITY", cookie)
@@ -46,7 +46,6 @@ def get_launch_url(cookie: str, id: int, job_id: str, private_server_code: str |
     auth_ticket = session.post("https://auth.roblox.com/v1/authentication-ticket/").headers["rbx-authentication-ticket"]
     browser_id = random.randint(100000000, 9999999999999)
 
-    if channel_name == None: channel_name = ''
     channel = "channel:" + channel_name
 
     #TODO: make it less ugly
@@ -63,14 +62,14 @@ def get_launch_url(cookie: str, id: int, job_id: str, private_server_code: str |
 
     join_attempt_id = ""
     place_launcher_parameters = (
-        f"https://www.roblox.com/Game/PlaceLauncher.ashx?request=RequestGame"
-        f"&browserTrackerId={browser_id}"
-        f"&placeId={id}"
-        f"&isPlayTogetherGame=false"
-        f"&joinAttemptId={join_attempt_id}"
-        f"&joinAttemptOrigin=PlayButton"
-        f"&gameId={job_id}"
-    )
+            f"https://www.roblox.com/Game/PlaceLauncher.ashx?request=RequestGame"
+            f"&browserTrackerId={browser_id}"
+            f"&placeId={id}"
+            f"&isPlayTogetherGame=false"
+            f"&joinAttemptId={join_attempt_id}"
+            f"&joinAttemptOrigin=PlayButton"
+            f"&gameId={job_id}"
+            )
 
     if private_server_code:
         place_launcher_parameters += f"&linkCode={private_server_code}"
@@ -80,7 +79,7 @@ def get_launch_url(cookie: str, id: int, job_id: str, private_server_code: str |
     return f"roblox-player:{version}+{launch_mode}+{game_info}+{launch_time}+{place_launcher_url}+{base_url}+{channel}+{roblox_locale}+{game_locale}+{launch_experience}"
 
 def parse_config_file(file_path: str) -> dict[str, str]:
-    result = {}
+    result: dict[str, str] = {}
 
     path = pathlib.Path().home().joinpath(file_path)
     with open(path) as file:
@@ -166,3 +165,4 @@ def main(arguments: argparse.Namespace):
 if __name__ == "__main__":
     arguments = add_parser()
     main(arguments)
+
