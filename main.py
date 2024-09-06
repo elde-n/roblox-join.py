@@ -1,17 +1,20 @@
 #!/usr/bin/env python
-#PYTHON_ARGCOMPLETE_OK
+# PYTHON_ARGCOMPLETE_OK
 
 import os
 import time
 import random
+import shutil
 import urllib
 import pathlib
-import requests
 import argparse
+import platform
+import subprocess
+
+import requests
 import argcomplete
 import urllib.parse
 
-import platform
 
 import find_job_id
 
@@ -20,12 +23,14 @@ GAMES_CONFIG_FILE = ".config/roblox-join/games"
 ACCOUNTS_CONFIG_FILE = ".config/roblox-join/accounts"
 
 SOBER_FLATPAK = "org.vinegarhq.Sober"
-SOBER_COOKIES_PATH = f".var/app/{SOBER_FLATPAK}/data/sober/cookies"
+SOBER_PATH = f".var/app/{SOBER_FLATPAK}"
+SOBER_COOKIES_PATH = "data/sober/cookies"
+SOBER_INSTANCES_PATH = ".local/share/sober/instances"
 
 
 def get_roblox_launcher() -> str:
     version = requests.get("https://setup.rbxcdn.com/version.txt").content.decode("ascii")
-    assert(version)
+    assert version
 
     app_data = os.getenv("LOCALAPPDATA")
     if app_data:
@@ -48,7 +53,7 @@ def get_launch_url(cookie: str, id: int, job_id: str, private_server_code: str |
 
     channel = "channel:" + channel_name
 
-    #TODO: make it less ugly
+    # TODO: make it less ugly
 
     version = 1
     launch_mode = "launchmode:play"
@@ -62,14 +67,14 @@ def get_launch_url(cookie: str, id: int, job_id: str, private_server_code: str |
 
     join_attempt_id = ""
     place_launcher_parameters = (
-            f"https://www.roblox.com/Game/PlaceLauncher.ashx?request=RequestGame"
-            f"&browserTrackerId={browser_id}"
-            f"&placeId={id}"
-            f"&isPlayTogetherGame=false"
-            f"&joinAttemptId={join_attempt_id}"
-            f"&joinAttemptOrigin=PlayButton"
-            f"&gameId={job_id}"
-            )
+        f"https://www.roblox.com/Game/PlaceLauncher.ashx?request=RequestGame"
+        f"&browserTrackerId={browser_id}"
+        f"&placeId={id}"
+        f"&isPlayTogetherGame=false"
+        f"&joinAttemptId={join_attempt_id}"
+        f"&joinAttemptOrigin=PlayButton"
+        f"&gameId={job_id}"
+    )
 
     if private_server_code:
         place_launcher_parameters += f"&linkCode={private_server_code}"
@@ -111,8 +116,8 @@ def add_parser() -> argparse.Namespace:
     places = parse_config_file(GAMES_CONFIG_FILE).values()
     accounts = parse_config_file(ACCOUNTS_CONFIG_FILE).keys()
 
-    parser.add_argument("--user","-u", choices = accounts)
-    parser.add_argument("--place", "-p", choices = places)
+    parser.add_argument("--user", "-u", choices=accounts)
+    parser.add_argument("--place", "-p", choices=places)
     parser.add_argument("--place-id", "-pid")
     parser.add_argument("--job-id", "-jid")
     parser.add_argument("--link-code", "-lnk")
@@ -134,10 +139,56 @@ def add_parser() -> argparse.Namespace:
 
     return arguments
 
-def sober_update_cookie(cookie: str):
-    path = pathlib.Path().home().joinpath(SOBER_COOKIES_PATH)
+def sober_is_launcher(launcher: str) -> bool:
+    if platform.system() != "Windows":
+        default_launcher = os.popen("xdg-mime query default \"x-scheme-handler/roblox\"").read()
+        if default_launcher.startswith(SOBER_FLATPAK):
+            return True
+    return False
+
+def sober_update_cookie(env: pathlib.Path, cookie: str):
+    path = env.joinpath(SOBER_COOKIES_PATH)
     with open(path, 'w') as f:
         f.write(".ROBLOSECURITY=" + cookie)
+
+def sober_is_running(env: pathlib.Path) -> bool:
+    age = 0
+    path = env.joinpath(SOBER_COOKIES_PATH)
+    if os.path.exists(path):
+        age = time.time() - os.path.getmtime(path)
+
+    if age > 3:
+        try: subprocess.check_output(["pidof", "-s", "sober"])
+        except subprocess.CalledProcessError: return False
+        return True
+
+    return False
+
+def sober_new_env(name: str, cookie: str) -> str:
+    path = pathlib.Path().home().joinpath(SOBER_INSTANCES_PATH).joinpath(name)
+
+    env_path = path.joinpath(SOBER_PATH)
+    env_config = env_path.joinpath("config")
+    env_data = env_path.joinpath("data/sober")
+
+    main_env = pathlib.Path().home().joinpath(SOBER_PATH)
+    config = main_env.joinpath("config")
+    data = main_env.joinpath("data/sober")
+
+    if not os.path.exists(env_path):
+        os.makedirs(env_path)
+
+    if not os.path.exists(env_data):
+        os.makedirs(env_data)
+
+    os.system(f"ln -sf {config} {env_config}")
+
+    whitelisted_data = ["state", "appData", "assets"]
+    for file in whitelisted_data:
+        os.system(f"cp -r {data.joinpath(file)} {env_data.joinpath(file)}")
+
+    sober_update_cookie(env_path, cookie)
+    return str(path)
 
 
 def main(arguments: argparse.Namespace):
@@ -153,11 +204,19 @@ def main(arguments: argparse.Namespace):
             exit(1)
 
     launcher = arguments.launcher or get_roblox_launcher()
-    launch_url = get_launch_url(cookie, place_id, job_id, arguments.link_code, arguments.channel or '')
+    launch_url = get_launch_url(cookie,
+                                place_id,
+                                job_id,
+                                arguments.link_code,
+                                arguments.channel or '')
 
-    if platform.system() != "Windows":
-        if os.popen("xdg-mime query default \"x-scheme-handler/roblox\"").read().startswith(SOBER_FLATPAK):
-            sober_update_cookie(cookie)
+    if sober_is_launcher(launcher):
+        main_env = pathlib.Path().home().joinpath(SOBER_PATH)
+        if sober_is_running(main_env):
+            env = sober_new_env(arguments.user, cookie)
+            launcher = f"env HOME={env} {launcher}"
+        else:
+            sober_update_cookie(main_env, cookie)
 
     launch(launcher, launch_url)
 
@@ -165,4 +224,3 @@ def main(arguments: argparse.Namespace):
 if __name__ == "__main__":
     arguments = add_parser()
     main(arguments)
-
