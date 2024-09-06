@@ -4,7 +4,6 @@
 import os
 import time
 import random
-import shutil
 import urllib
 import pathlib
 import argparse
@@ -152,17 +151,17 @@ def sober_update_cookie(env: pathlib.Path, cookie: str):
         f.write(".ROBLOSECURITY=" + cookie)
 
 def sober_is_running(env: pathlib.Path) -> bool:
-    age = 0
     path = env.joinpath(SOBER_COOKIES_PATH)
-    if os.path.exists(path):
-        age = time.time() - os.path.getmtime(path)
+    if not os.path.exists(path):
+        return False
 
-    if age > 3:
+    age = time.time() - os.path.getmtime(path)
+    if age > 1:
         try: subprocess.check_output(["pidof", "-s", "sober"])
         except subprocess.CalledProcessError: return False
         return True
 
-    return False
+    return True
 
 def sober_new_env(name: str, cookie: str) -> str:
     path = pathlib.Path().home().joinpath(SOBER_INSTANCES_PATH).joinpath(name)
