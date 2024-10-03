@@ -180,7 +180,7 @@ def sober_new_env(name: str, cookie: str) -> str:
     if not os.path.exists(env_data):
         os.makedirs(env_data)
 
-    os.system(f"ln -sf {config} {env_config}")
+    os.system(f"ln -sf {config} {env_path}")
 
     whitelisted_data = ["state", "appData", "assets"]
     for file in whitelisted_data:
