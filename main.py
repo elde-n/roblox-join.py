@@ -44,7 +44,7 @@ def get_launch_url(cookie: str, id: int, job_id: str, private_server_code: str |
     session.headers["Referer"] = "https://www.roblox.com/"
     session.cookies.set(".ROBLOSECURITY", cookie)
     session.headers["Content-Type"] = "application/json"
-    session.headers["X-CSRF-TOKEN"] = session.post("https://catalog.roblox.com/").headers["x-csrf-token"]
+    session.headers["X-CSRF-TOKEN"] = session.post("https://roblox.com/catalog").headers["x-csrf-token"]
 
     assert(session.request("GET", "https://users.roblox.com/v1/users/authenticated").status_code == 200)
     auth_ticket = session.post("https://auth.roblox.com/v1/authentication-ticket/").headers["rbx-authentication-ticket"]
