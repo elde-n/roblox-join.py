@@ -1,6 +1,9 @@
 # roblox-join.py
 A python script for roblox that launches the roblox-player
 
+## Archived
+Unmaintained, [roblox-cli](https://github.com/elde-n/roblox-cli) can be used as an alternative
+
 ## Getting Started
 ```sh
 python main.py -u user-name -p place-name
